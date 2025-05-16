@@ -1,83 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Rotating Leaderboards</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintenance in Progress - Sales Championship</title>
   <style>
-    body, html {
+    :root {
+      --primary: #3498db;
+      --secondary: #2ecc71;
+      --accent: #e74c3c;
+      --dark: #2c3e50;
+      --light: #ecf0f1;
+    }
+
+    * {
       margin: 0;
       padding: 0;
-      background-color: black;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: var(--dark);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .maintenance-container {
+      max-width: 600px;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .logo {
+      width: 120px;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-size: 2.2rem;
+    }
+
+    p {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background: #ecf0f1;
+      border-radius: 4px;
+      margin: 2rem 0;
       overflow: hidden;
     }
-    #image-container {
-      position: absolute;
-      width: 100vw;
-      height: 100vh;
-    }
-    #image-container img {
-      width: 100%;
+
+    .progress-bar {
       height: 100%;
-      object-fit: contain;
-      position: absolute;
-      opacity: 0;
-      transition: opacity 2s ease-in-out;
+      width: 0;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 4px;
+      animation: progressAnimation 5s infinite ease-in-out;
     }
-    #image-container img.active {
-      opacity: 1;
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes progressAnimation {
+      0% { width: 0%; }
+      50% { width: 100%; }
+      100% { width: 0%; }
+    }
+
+    @media (max-width: 600px) {
+      .maintenance-container {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      p {
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="image-container"></div>
+  <div class="maintenance-container">
+    <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 8V12L15 15" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
 
-  <script>
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRsEF2tDRZ-k9nYQt_VKqemSY38U_nEOz6CsIHfZqn7pZqRa4LEeCTMLs2dUBtS67pfBSAV0E-aZ4tq/pub?output=csv';
+    <h1>Maintenance in Progress</h1>
+    <p>We are currently improving our leaderboard to offer you a better experience.</p>
+    <p>The site will be available again shortly. Thank you for your patience.</p>
 
-    let images = [];
-    let current = 0;
-    const container = document.getElementById('image-container');
-
-    function fetchImages() {
-      fetch(SHEET_URL)
-        .then(response => response.text())
-        .then(csv => {
-          const lines = csv.trim().split('\n');
-          const urls = lines.slice(1).map(row => row.trim()); // skip header
-          updateImageList(urls);
-        })
-        .catch(err => console.error("Failed to load sheet:", err));
-    }
-
-    function updateImageList(urls) {
-      container.innerHTML = ''; // Clear existing images
-      images = urls.map(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        container.appendChild(img);
-        return img;
-      });
-      current = 0;
-      showImage(current);
-    }
-
-    function showImage(index) {
-      images.forEach((img, i) => {
-        img.classList.remove('active');
-        if (i === index) img.classList.add('active');
-      });
-    }
-
-    function nextImage() {
-      if (images.length === 0) return;
-      current = (current + 1) % images.length;
-      showImage(current);
-    }
-
-    // Initial load
-    fetchImages();
-    setInterval(fetchImages, 60000); // update from sheet every 60s
-    setInterval(nextImage, 30000);   // switch image every 30s
-  </script>
+    <div class="progress-container">
+      <div class="progress-bar"></div>
+    </div>
+  </div>
 </body>
 </html>
