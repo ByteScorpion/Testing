@@ -1,120 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Maintenance in Progress - Sales Championship</title>
-  <style>
-    :root {
-      --primary: #3498db;
-      --secondary: #2ecc71;
-      --accent: #e74c3c;
-      --dark: #2c3e50;
-      --light: #ecf0f1;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      color: var(--dark);
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    .maintenance-container {
-      max-width: 600px;
-      padding: 2rem;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      animation: fadeIn 0.8s ease-out;
-    }
-
-    .logo {
-      width: 120px;
-      margin-bottom: 1.5rem;
-    }
-
-    h1 {
-      color: var(--primary);
-      margin-bottom: 1rem;
-      font-size: 2.2rem;
-    }
-
-    p {
-      margin-bottom: 1.5rem;
-      font-size: 1.1rem;
-      color: #555;
-    }
-
-    .progress-container {
-      width: 100%;
-      height: 8px;
-      background: #ecf0f1;
-      border-radius: 4px;
-      margin: 2rem 0;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      border-radius: 4px;
-      animation: progressAnimation 5s infinite ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes progressAnimation {
-      0% { width: 0%; }
-      50% { width: 100%; }
-      100% { width: 0%; }
-    }
-
-    @media (max-width: 600px) {
-      .maintenance-container {
-        margin: 1rem;
-        padding: 1.5rem;
-      }
-
-      h1 {
-        font-size: 1.8rem;
-      }
-
-      p {
-        font-size: 1rem;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full HD Kiosk Display</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        #image-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #current-image {
+            /* Force full HD resolution */
+            width: 1920px;
+            height: 1080px;
+            object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+        .loading {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+        }
+        .error {
+            color: red;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+        }
+        @media (max-width: 1920px) {
+            #current-image {
+                width: 100%;
+                height: auto;
+                max-height: 100vh;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="maintenance-container">
-    <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M12 8V12L15 15" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-
-    <h1>Maintenance in Progress</h1>
-    <p>We are currently improving our leaderboard to offer you a better experience.</p>
-    <p>The site will be available again shortly. Thank you for your patience.</p>
-
-    <div class="progress-container">
-      <div class="progress-bar"></div>
+    <div id="image-container">
+        <div class="loading">Loading Full HD image...</div>
     </div>
-  </div>
+
+    <script>
+        // Google Sheets published as CSV
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRwUnjNNdpLYZdfYiD8D7r2o51rDzt0rdMiXfxkN99uzA6Y7e-SDEAR_sa-FL1uGNUYHJ5KrlhivF4L/pub?output=csv";
+        
+        const REFRESH_INTERVAL = 30000; // 30 seconds
+        
+        function convertDriveUrl(shareUrl) {
+            // If already a direct image URL, return as-is
+            if (shareUrl.includes('lh3.googleusercontent.com')) {
+                // Change =s0 to =s1920 to get full HD resolution
+                return shareUrl.replace(/=s\d+$/, '=s1920');
+            }
+            
+            // Extract file ID
+            const match = shareUrl.match(/\/file\/d\/([^\/]+)/) || 
+                         shareUrl.match(/id=([^&]+)/) || 
+                         shareUrl.match(/\/([^\/]{33})/);
+            
+            if (match && match[1]) {
+                // Get full HD resolution (s1920)
+                return `https://lh3.googleusercontent.com/d/${match[1]}=s1920`;
+            }
+            return shareUrl;
+        }
+        
+        async function fetchImageUrl() {
+            try {
+                const response = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`);
+                if (!response.ok) throw new Error('Failed to fetch sheet');
+                const csvData = await response.text();
+                const firstCellValue = csvData.split('\n')[0].split(',')[0].trim();
+                if (!firstCellValue) throw new Error('Cell A1 is empty');
+                return firstCellValue;
+            } catch (error) {
+                showError(`Sheet error: ${error.message}`);
+                return null;
+            }
+        }
+        
+        function showError(message) {
+            const container = document.getElementById('image-container');
+            container.innerHTML = `<div class="error">${message}<br><br>Current URL: ${currentUrl || 'none'}</div>`;
+        }
+        
+        let currentUrl = '';
+        
+        async function loadAndDisplayImage() {
+            try {
+                const imageUrl = await fetchImageUrl();
+                if (!imageUrl) return;
+                
+                currentUrl = convertDriveUrl(imageUrl);
+                const container = document.getElementById('image-container');
+                
+                const img = new Image();
+                img.id = 'current-image';
+                img.src = currentUrl;
+                
+                img.onload = function() {
+                    container.innerHTML = '';
+                    container.appendChild(img);
+                    console.log(`Image loaded at full HD resolution: ${img.naturalWidth}x${img.naturalHeight}`);
+                };
+                
+                img.onerror = function() {
+                    showError(`Failed to load HD image. Ensure:<br>
+                    1. File is shared publicly<br>
+                    2. URL is correct<br>
+                    3. Image is large enough (1920×1080)`);
+                };
+            } catch (error) {
+                showError(`Load error: ${error.message}`);
+            }
+        }
+        
+        // Initial load
+        loadAndDisplayImage();
+        setInterval(loadAndDisplayImage, REFRESH_INTERVAL);
+        
+        // Fullscreen handling
+        function enterFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error('Fullscreen error:', err);
+                });
+            }
+        }
+        
+        document.addEventListener('click', enterFullscreen);
+        window.addEventListener('load', enterFullscreen);
+        setTimeout(enterFullscreen, 1000);
+        
+        // Handle screen resize
+        window.addEventListener('resize', function() {
+            const img = document.getElementById('current-image');
+            if (img) {
+                // Maintain aspect ratio while fitting to screen
+                const container = document.getElementById('image-container');
+                const containerRatio = container.clientWidth / container.clientHeight;
+                const imgRatio = img.naturalWidth / img.naturalHeight;
+                
+                if (containerRatio > imgRatio) {
+                    img.style.width = 'auto';
+                    img.style.height = '100%';
+                } else {
+                    img.style.width = '100%';
+                    img.style.height = 'auto';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
