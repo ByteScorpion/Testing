@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dynamic Leaderboard Videos</title>
+  <meta charset="UTF-8" />
+  <title>Leaderboard Video Rotator</title>
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
-      background: black;
+      background-color: black;
+      height: 100%;
       overflow: hidden;
     }
+
     video {
       position: absolute;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: opacity 1.5s ease-in-out;
+      transition: opacity 1s ease-in-out;
       opacity: 0;
-      z-index: 0;
     }
+
     video.active {
       opacity: 1;
       z-index: 1;
@@ -27,62 +29,49 @@
 </head>
 <body>
 
-<video id="video1" class="active" autoplay muted loop playsinline></video>
+<video id="video1" autoplay muted loop playsinline></video>
 <video id="video2" autoplay muted loop playsinline></video>
 
 <script>
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRsEF2tDRZ-k9nYQt_VKqemSY38U_nEOz6CsIHfZqn7pZqRa4LEeCTMLs2dUBtS67pfBSAV0E-aZ4tq/pub?output=csv";
-
-  let videoSources = [];
+  const videos = [document.getElementById('video1'), document.getElementById('video2')];
+  let videoLinks = [];
   let current = 0;
-  const videos = [
-    document.getElementById("video1"),
-    document.getElementById("video2")
-  ];
 
-  async function fetchVideoSources() {
+  async function fetchVideosFromSheet() {
     try {
-      const response = await fetch(SHEET_CSV_URL);
-      const text = await response.text();
-      const rows = text.split('\n').slice(1); // skip header
+      const res = await fetch(SHEET_CSV_URL);
+      const text = await res.text();
+      const rows = text.split("\n").slice(1); // Skip header
+      videoLinks = rows.map(row => row.split(",")[1].trim()).filter(url => url.startsWith("https://"));
 
-      videoSources = rows
-        .map(row => row.split(',')[1]?.trim())
-        .filter(url => url && url.startsWith('https://drive.google.com/uc?'));
+      console.log("Fetched videos:", videoLinks);
 
-      console.log("Updated video sources:", videoSources);
+      if (videoLinks.length) {
+        preloadAndStart();
+      }
     } catch (err) {
-      console.error("Failed to fetch video sources", err);
+      console.error("Failed to load video URLs:", err);
     }
   }
 
-  function rotateVideos() {
-    if (videoSources.length === 0) return;
+  function preloadAndStart() {
+    // Set first two sources
+    videos[0].src = videoLinks[0];
+    videos[0].classList.add("active");
+    videos[1].src = videoLinks[1 % videoLinks.length];
 
-    const prev = current;
-    current = (current + 1) % videoSources.length;
-
-    const videoElement = videos[current % 2];
-    videoElement.src = videoSources[current];
-
-    videos[prev % 2].classList.remove("active");
-    videoElement.classList.add("active");
+    setInterval(() => {
+      const next = (current + 1) % videoLinks.length;
+      const inactive = videos[(current + 1) % 2];
+      inactive.src = videoLinks[next];
+      videos[current % 2].classList.remove("active");
+      inactive.classList.add("active");
+      current = next;
+    }, 30000); // Switch every 30s
   }
 
-  async function startLoop() {
-    await fetchVideoSources();
-    if (videoSources.length >= 2) {
-      videos[0].src = videoSources[0];
-      videos[1].src = videoSources[1];
-    } else if (videoSources.length === 1) {
-      videos[0].src = videoSources[0];
-    }
-
-    setInterval(rotateVideos, 30000); // every 30 seconds
-    setInterval(fetchVideoSources, 60000); // refresh sheet every 60 seconds
-  }
-
-  startLoop();
+  fetchVideosFromSheet();
 </script>
 
 </body>
